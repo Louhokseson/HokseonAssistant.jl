@@ -1,0 +1,13 @@
+name = "HokseonAssistant"
+uuid = "4e992a72-38bf-4f56-b165-33bbf4775b47"
+authors = ["Hokseon Lou <louhokseson@outlook.com>"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.6.7"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
