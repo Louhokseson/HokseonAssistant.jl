@@ -1,5 +1,3 @@
-using Pkg
-Pkg.activate("..")  # Activates the parent directory, which is your project
 using HokseonAssistant
 using Distributed
 using Test
