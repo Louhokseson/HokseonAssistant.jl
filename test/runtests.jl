@@ -1,6 +1,13 @@
+using Pkg
+Pkg.activate("..")  # Activates the parent directory, which is your project
 using HokseonAssistant
 using Distributed
 using Test
+
+
+@info "The correct number of threads in the main process : $(Threads.nthreads())" 
+@info "HokseonAssistant path" pathof(HokseonAssistant)
+
 
 @testset "HokseonAssistant.julia_session(Main process)" begin
     # Write your tests here.

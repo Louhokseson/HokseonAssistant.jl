@@ -33,7 +33,7 @@ end
 
 
 function worker_info(job_id, id_source)
-    println("Worker $(myid()) | Job ID: $job_id | Source: $id_source | Host: $(gethostname())")
+    println("Worker $(myid()) | Job ID: $job_id | Source: $id_source | Host: $(gethostname()) | Thread(s): $(Threads.nthreads())")
 end
 
 # Function to initialize workers with job info
@@ -57,7 +57,7 @@ function initialize_workers_with_job_info()
         pmap(worker -> remotecall_fetch(worker_info, worker, job_id, id_source), workers())
     else
         println("No workers available. Running on main process only.")
-        println("Main process | Job ID: $job_id | Source: $id_source | Host: $(gethostname())")
+        println("Main process | Job ID: $job_id | Source: $id_source | Host: $(gethostname()) | Thread(s): $(Threads.nthreads())")
     end
 
     return job_id, id_source
@@ -77,8 +77,8 @@ function initialize_num_threads()
     else
         # Default to 1 thread if neither SLURM nor JULIA_NUM_THREADS is set
         # In this case, user is pressing the run button in the IDE
-        num_threads_val = 1
-        println("No SLURM or local bash detected: Defaulting to $num_threads_val thread.")
+        num_threads_val = Threads.nthreads()
+        println("No SLURM or local bash detected for the main process: Defaulting to $num_threads_val thread(s).")
     end
 
     return num_threads_val
