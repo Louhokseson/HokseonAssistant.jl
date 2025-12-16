@@ -1,27 +1,39 @@
-# src/HokseonAssistant.jl
-
 module HokseonAssistant
 
-using Distributed 
-
+using Distributed
 include("jobinfo/JobInfoUtils.jl")
+using .JobInfoUtils
 
-using .JobInfoUtils # This makes JobInfoUtils.get_job_id callable as get_job_id within HokseonAssistant
+export num_threads, julia_session
 
-# export variables
-export num_threads
-
-
+# Thread count variable
 num_threads::Int = 0
 
-function julia_session(broadcast_num_threads::Bool = true)
+"""
+    julia_session(broadcast_num_threads::Bool=true)
 
+Initialize job info and thread counts.
+
+- Only call this on the main process.
+- Broadcasts `num_threads` to all workers if `broadcast_num_threads` is true.
+"""
+function julia_session(broadcast_num_threads::Bool = true)
     global num_threads
 
-    JobInfoUtils.initialize_workers_with_job_info()
-    num_threads = JobInfoUtils.initialize_num_threads()
-    broadcast_num_threads && @everywhere num_threads = $num_threads;
+    # Initialize workers with job info
+    job_id, id_source = JobInfoUtils.initialize_workers_with_job_info_main_only()
 
+    # Initialize number of threads on main process
+    num_threads = JobInfoUtils.initialize_num_threads()
+
+    # Optionally broadcast to all workers (just a variable, not functions)
+    if broadcast_num_threads && nworkers() > 0
+        #@info "Broadcasting num_threads=$num_threads to all workers"
+        @everywhere global num_threads = $num_threads
+    end
+
+    return job_id, id_source
 end
 
-end # End of module HokseonAssistant
+end # module HokseonAssistant
+
