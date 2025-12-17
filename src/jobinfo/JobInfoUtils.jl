@@ -1,7 +1,7 @@
 module JobInfoUtils
 
 using Distributed
-
+using ClusterManagers: SlurmManager
 export get_job_id, initialize_workers_with_job_info_main_only, initialize_num_threads
 
 # Get job ID (SLURM, SESSION_ID, or default)
@@ -56,6 +56,68 @@ function initialize_num_threads()
         num_threads_val = Threads.nthreads()
         println("Defaulting to $num_threads_val thread(s).")
     end
+    return num_threads_val
+end
+
+# Determine number of threads for main process
+function initialize_procs(;add_nprocs::Int=0)
+
+    old_workers = Set(workers())
+
+    project = Base.active_project()
+
+    if haskey(ENV, "SLURM_JOB_ID")
+        # 1. SLURM CASE: Handle multi-node distribution
+        nworker = parse(Int, ENV["SLURM_NTASKS"])
+        num_threads_val = parse(Int, ENV["SLURM_CPUS_PER_TASK"])
+        println("Running on SLURM: Launching $(nworker) workers across nodes. Using $num_threads_val threads per worker.")
+        println("No additional workers will be added since SLURM manages worker allocation.")
+
+        # Start workers with SlurmManager
+
+        if nworkers() != nworker
+            addprocs(SlurmManager(nworker); exeflags=[
+                "--project=$project",
+                "-t $num_threads_val"
+            ])
+        end
+
+        add_nprocs = 0  ## Slurm prevent adding more procs from here
+    elseif nworkers() > 1
+        # 2. COMMAND LINE CASE: User ran 'julia -p 10 -t 2'
+        nworker = nworkers()  # including main process
+        num_threads_val = Threads.nthreads() 
+        println("Running by -p flag: $(nworker) workers detected; each worker has $num_threads_val thread(s).")
+    else
+        # 3. LOCAL FALLBACK: Manual start (e.g., inside VS Code or REPL) or julia -t 4
+        nworker = 0
+        num_threads_val = Threads.nthreads()
+        println("Running locally:  Defaulting to $num_threads_val thread(s) with a master worker.")
+    end
+
+    new_workers = setdiff(workers(), old_workers)
+
+    if add_nprocs > 0 || new_workers != Set()
+        # 4. ADD ADDITIONAL WORKERS IF REQUESTED in the programme
+
+        if add_nprocs > 0
+            total_procs = nworker + add_nprocs
+            num_threads_val = div(Sys.CPU_THREADS, total_procs)
+            println("Adding $add_nprocs additional worker(s) in the script:\nTotal workers will be: $total_procs\n Each worker will have $num_threads_val thread(s).")
+
+            addprocs(add_nprocs; exeflags=[
+                "--project=$project",
+                "-t $num_threads_val"
+            ])
+        end
+
+        new_workers = setdiff(workers(), old_workers)
+        
+        for w in new_workers
+            Distributed.remotecall_eval(Main, w, :(using HokseonAssistant))
+        end
+    end
+
     return num_threads_val
 end
 

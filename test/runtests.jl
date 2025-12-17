@@ -29,3 +29,25 @@ end
         @test false  # Fail the test if initialization fails
     end
 end
+
+@testset "HokseonAssistant.julia_build_procs(Main process)" begin
+    # Write your tests here.
+    try
+        HokseonAssistant.julia_build_procs()
+    catch e
+        @error "HokseonAssistant.julia_build_procs() failed" exception=e
+        @test false  # Fail the test if initialization fails
+    end
+end
+
+@testset "HokseonAssistant.julia_build_procs(Multiple processes)" begin
+    # Write your tests here.
+    try
+        addprocs(2)
+        @everywhere using HokseonAssistant  # Ensure all workers can access HokseonAssistant
+        HokseonAssistant.julia_build_procs()
+    catch e
+        @error "HokseonAssistant.julia_build_procs() failed" exception=e
+        @test false  # Fail the test if initialization fails
+    end
+end
