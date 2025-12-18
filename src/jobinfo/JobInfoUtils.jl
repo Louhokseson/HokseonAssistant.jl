@@ -88,12 +88,16 @@ function initialize_procs(;add_nprocs::Int=0)
         # Start workers with SlurmManager
 
         if nworkers() != nworker
-            addprocs(SlurmManager(nworker); 
-                output="/dev/null", 
-                error="/dev/null",
+            addprocs(
+                SlurmManager(nworker);
                 exeflags=[
                     "--project=$project",
-                    "-t $num_threads_val"
+                    "-t $num_threads_val",
+                    "--startup-file=no"
+                ],
+                slurm_flags=[
+                    "--output=/dev/null",
+                    "--error=/dev/null"
                 ]
             )
         end

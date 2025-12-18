@@ -1,7 +1,7 @@
 name = "HokseonAssistant"
 uuid = "4e992a72-38bf-4f56-b165-33bbf4775b47"
 authors = ["Hokseon Lou <louhokseson@outlook.com>"]
-version = "1.2.4"
+version = "1.2.5"
 
 [deps]
 ClusterManagers = "34f1f09b-3a8b-5176-ab39-66d58a4d544e"
