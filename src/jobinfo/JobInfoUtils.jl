@@ -90,7 +90,7 @@ function initialize_procs(;add_nprocs::Int=0)
 
         if nworkers() != nworker
             addprocs(
-                SlurmManager(nworker);
+                SlurmManager();
                 exeflags=[
                     "--project=$project",
                     "-t $num_threads_val",
