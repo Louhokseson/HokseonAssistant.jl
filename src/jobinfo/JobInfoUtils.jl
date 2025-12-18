@@ -33,12 +33,24 @@ function initialize_workers_with_job_info_main_only()
 
     println("Main process Job ID: $job_id")
 
-    if nworkers() > 0
-        # Call worker_info on each worker using anonymous function
-        pmap(w -> remotecall_fetch(() -> println("Worker $w | Job ID: $job_id | Source: $id_source | Host: $(gethostname()) | Thread(s): $(Threads.nthreads())"), w), workers())
+    if nprocs() > 1
+        # Workers RETURN strings; master prints
+        msgs = [
+            remotecall_fetch(w) do
+                "   Worker $w | Job ID: $job_id | Source: $id_source | " *
+                "   Host: $(gethostname()) | Thread(s): $(Threads.nthreads())"
+            end
+            for w in workers()
+        ]
+
+
+        foreach(println, sort(msgs))
     else
         println("No workers available. Running on main process only.")
-        println("Main process | Job ID: $job_id | Source: $id_source | Host: $(gethostname()) | Thread(s): $(Threads.nthreads())")
+        println(
+            "   Main process | Job ID: $job_id | Source: $id_source | " *
+            "   Host: $(gethostname()) | Thread(s): $(Threads.nthreads())"
+        )
     end
 
     return job_id, id_source
@@ -83,7 +95,7 @@ function initialize_procs(;add_nprocs::Int=0)
         end
 
         add_nprocs = 0  ## Slurm prevent adding more procs from here
-    elseif nworkers() > 1
+    elseif nprocs() > 1
         # 2. COMMAND LINE CASE: User ran 'julia -p 10 -t 2'
         nworker = nworkers()  # including main process
         num_threads_val = Threads.nthreads() 
@@ -101,11 +113,15 @@ function initialize_procs(;add_nprocs::Int=0)
         # 4. ADD ADDITIONAL WORKERS IF REQUESTED in the programme
 
         if add_nprocs > 0
-            total_procs = nworker + add_nprocs
-            num_threads_val = div(Sys.CPU_THREADS, total_procs)
-            println("Adding $add_nprocs additional worker(s) in the script:\nTotal workers will be: $total_procs\n Each worker will have $num_threads_val thread(s).")
+            before_add_nprocs = nprocs()
+            if before_add_nprocs > 1
+                rmprocs(workers())
+            end
+            total_workers = before_add_nprocs + add_nprocs - 1  # exclude main process
+            num_threads_val = div(Sys.CPU_THREADS, total_workers)
+            println("Adding $add_nprocs additional worker(s) by julia_build_procs():\nTotal workers will be: $total_workers\n Each worker will have $num_threads_val thread(s).")
 
-            addprocs(add_nprocs; exeflags=[
+            addprocs(total_workers; exeflags=[
                 "--project=$project",
                 "-t $num_threads_val"
             ])
