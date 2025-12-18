@@ -86,14 +86,14 @@ function initialize_procs(;add_nprocs::Int=0)
         println("No additional workers will be added since SLURM manages worker allocation.")
 
         # Start workers with SlurmManager
-
+        ENV["SLURM_SRUN_ARGS"] = "--output=/dev/null --error=/dev/null"
+        
         if nworkers() != nworker
             addprocs(
                 SlurmManager(nworker);
                 exeflags=[
                     "--project=$project",
                     "-t $num_threads_val",
-                    "--startup-file=no"
                 ]
             )
         end
