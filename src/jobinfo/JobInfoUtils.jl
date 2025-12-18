@@ -1,7 +1,7 @@
 module JobInfoUtils
 
 using Distributed
-using ClusterManagers: SlurmManager
+using SlurmClusterManager: SlurmManager
 export get_job_id, initialize_workers_with_job_info_main_only, initialize_num_threads
 
 # Get job ID (SLURM, SESSION_ID, or default)
@@ -86,8 +86,8 @@ function initialize_procs(;add_nprocs::Int=0)
         println("No additional workers will be added since SLURM manages worker allocation.")
 
         # Start workers with SlurmManager
-        ENV["SLURM_SRUN_ARGS"] = "--output=/dev/null --error=/dev/null"
-        
+        #ENV["SLURM_SRUN_ARGS"] = "--output=/dev/null --error=/dev/null"
+
         if nworkers() != nworker
             addprocs(
                 SlurmManager(nworker);
