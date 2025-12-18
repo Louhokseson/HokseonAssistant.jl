@@ -94,10 +94,6 @@ function initialize_procs(;add_nprocs::Int=0)
                     "--project=$project",
                     "-t $num_threads_val",
                     "--startup-file=no"
-                ],
-                slurm_flags=[
-                    "--output=/dev/null",
-                    "--error=/dev/null"
                 ]
             )
         end
